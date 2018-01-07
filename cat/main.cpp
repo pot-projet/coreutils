@@ -21,17 +21,70 @@
 #include "read.hpp"
 #include "process.hpp"
 
+namespace {
+    struct param_info {
+        bool number_noblank=false, show_ends=false, number=false, squeeze_blank=false,
+                show_tabs=false, show_nonprinting=false, new_line=false;
+    };
+    void decode_params(const coreutils::parameter& param, param_info& pi) {
+        if(param.check("-b")) {
+            pi.number_noblank=true;
+        }
+        if(param.check("-n")) {
+            if(pi.number_noblank) {
+                std::clog<<"-b and -n are specified at the same time.\n"
+                         <<"  -b takes precedence."
+                         <<std::endl;
+            }
+            pi.number=true;
+        }
+        if(param.check("-s")) {
+            pi.squeeze_blank=true;
+        }
+        if(param.check("-N")) {
+            pi.new_line=true;
+        }
+
+        if(param.check("-A")) {
+            pi.show_ends=true;
+            pi.show_tabs=true;
+            pi.show_nonprinting=true;
+        }else{
+            if(param.check("-e")) {
+                pi.show_ends=true;
+                pi.show_nonprinting=true;
+            }
+            if(param.check("-t")) {
+                pi.show_tabs=true;
+                pi.show_nonprinting=true;
+            }
+
+            if(param.check("-E")) {
+                pi.show_ends=true;
+            }
+            if(param.check("-T")) {
+                pi.show_tabs=true;
+            }
+            if(param.check("-v")) {
+                pi.show_nonprinting=true;
+            }
+        }
+    }
+} /* anonymous */
+
 int main(int argc, char **argv) {
-    coreutils::parameter param("cat", "[OPTION]... [FILE]...", "1.0.0.0-dev", "conCATenate");
+    coreutils::parameter param("cat", "[OPTION]... [FILE]...", "1.0.0.0-dev", "conCATenate FILEs to standard output");
     param.add_flag({"-A", "--show-all"},         "Same with -vET");
     param.add_flag({"-b", "--number-nonblank"},  "Show line number to non-blank lines");
     param.add_flag({"-e"},                       "Same with -vE");
     param.add_flag({"-E", "--show-ends"},        "Display '$' symbol at end of line");
     param.add_flag({"-n", "--number"},           "Show line number");
     param.add_flag({"-s", "--squeeze-blank"},    "Compresses consecutive empty lines");
-    param.add_flag({"-t", "-T", "--show-tabs"},  "Display TAB(\\t) as '^I'");
+    param.add_flag({"-t"},                       "Same with -vT");
+    param.add_flag({"-T", "--show-tabs"},        "Display TAB(\\t) as '^I'");
     param.add_flag({"-u"},                       "");
     param.add_flag({"-v", "--show-nonprinting"}, "Display not printable");
+    param.add_flag({"-N", "--new-line"},         "Display new line in end of file");
 
     param.parse(argc, argv);
 
@@ -44,13 +97,40 @@ int main(int argc, char **argv) {
         return EXIT_SUCCESS;
     }
 
-    auto lines=coreutils::cat::read(param.arguments());
-    coreutils::cat::compress_blank(lines);
-    coreutils::cat::line_number(lines);
+    param_info pi;
+    decode_params(param, pi);
 
-    for(const auto& line : lines) {
-        std::cout<<line<<std::endl;
+    auto lines=coreutils::cat::read(param.arguments());
+    if(pi.squeeze_blank) {
+        coreutils::cat::compress_blank(lines);
     }
+
+    if(pi.number_noblank) {
+        coreutils::cat::line_number_ignore_blank(lines);
+    }else if(pi.number) {
+        coreutils::cat::line_number(lines);
+    }
+
+    if(pi.show_ends) {
+        coreutils::cat::end_of_line(lines);
+    }
+
+    if(pi.show_tabs) {
+        coreutils::cat::replace_tab(lines);
+    }
+
+    if(pi.show_nonprinting) {
+        coreutils::cat::replace_control(lines);
+    }
+
+    for(std::size_t i=0; i<lines.size()-1; ++i) {
+        std::cout<<lines[i]<<std::endl;
+    }
+    std::cout<<lines.back();
+    if(pi.new_line) {
+        std::cout<<'\n';
+    }
+    std::cout<<std::flush;
 
     return EXIT_SUCCESS;
 }

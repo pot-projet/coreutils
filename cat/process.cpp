@@ -17,8 +17,8 @@
 #include <vector>
 #include <string>
 #include <algorithm>
-#include <cmath>
 #include <regex>
+#include <iomanip>
 
 namespace coreutils {
     namespace cat {
@@ -62,7 +62,10 @@ namespace coreutils {
                 std::sprintf(number, format.c_str(), num);
 
                 if(!line.empty()) {
-                    line=std::string(number)+"  "+line;
+                    auto l=std::string(number);
+                    l+="  ";
+                    l+=line;
+                    line=l;
                 }
 
                 ++num;
@@ -72,6 +75,9 @@ namespace coreutils {
         void end_of_line(std::vector<std::string>& lines) {
             for(auto& line : lines) {
                 line+="$";
+            }
+            if(!lines.back().empty()) {
+                lines.back().pop_back();
             }
         }
 
@@ -86,9 +92,47 @@ namespace coreutils {
             replace_char(lines, TAB, "^I");
         }
 
-        void replace_cr(std::vector<std::string>& lines) {
-            static const std::regex CR(R"(\r)");
-            replace_char(lines, CR, "^M");
+        void replace_control(std::vector<std::string>& lines) {
+
+            const auto replace_characters=[&lines](unsigned char ch) {
+                if(0x1f<ch && ch<0x7f)return;
+
+                std::stringstream ss;
+                ss<<"\\x"<<std::hex<<std::setw(2)<<std::setfill('0')<<static_cast<unsigned int>(ch);
+
+                constexpr unsigned char ASCII_OVER=0x80;
+
+                if(ch<=0x1f) {
+                    const char CH=ch+'@';
+                    const char to[]={'^', CH, '\0'};
+                    replace_char(lines, std::regex(ss.str()), to);
+
+                }else if(ch==0x7f) {
+                    const char to[]="^?";
+                    replace_char(lines, std::regex(ss.str()), to);
+
+                }else if(ch<=(0x1f+0x80)) {
+                    const char CH=ch+'@'-ASCII_OVER;
+                    const char to[]={'M', '-', '^', CH, '\0'};
+                    replace_char(lines, std::regex(ss.str()), to);
+
+                }else if(ch<0xff){
+                    const char CH=ch-ASCII_OVER;
+                    const char to[] = {'M', '-', CH, '\0'};
+                    replace_char(lines, std::regex(ss.str()), to);
+
+                }else{
+                    const char to[]="M-^?";
+                    replace_char(lines, std::regex(ss.str()), to);
+
+                }
+            };
+
+            for(auto& line : lines) {
+                for(int c=0; c<=0xff; ++c) {
+                    replace_characters(static_cast<unsigned char>(c));
+                }
+            }
         }
     } /* cat */
 } /* coreutils */

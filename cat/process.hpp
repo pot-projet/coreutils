@@ -28,7 +28,7 @@ namespace coreutils {
         void end_of_line(std::vector<std::string>& lines);
         void replace_char(std::vector<std::string>& lines, const std::regex& from, const std::string& to);
         void replace_tab(std::vector<std::string>& lines);
-        void replace_cr(std::vector<std::string>& lines);
+        void replace_control(std::vector<std::string>& lines);
     } /* cat */
 } /* coreutils */
 

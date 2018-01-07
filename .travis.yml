@@ -1,0 +1,17 @@
+addons:
+  apt:
+    sources:
+      - ubuntu-toolchain-r-test
+      - llvm-toolchain-precise
+    packages:
+      - g++
+      - gcc
+      - cmake
+      - cmake-data
+
+matrix:
+  include:
+    - compiler: gcc
+      addons:
+        apt:
+          sources:

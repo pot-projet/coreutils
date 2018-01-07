@@ -30,7 +30,12 @@ namespace coreutils {
      */
     class parameter {
     private:
-        const bool PARAM_TYPE_FLAG=true, PARAM_TYPE_ARGS=false;
+        static constexpr bool _flag() {
+            return true;
+        }
+        static constexpr bool _args() {
+            return false;
+        }
     private:
         std::vector<std::string> _params, _arguments;
 
@@ -69,18 +74,40 @@ namespace coreutils {
             std::stringstream ss;
             ss<<"Usage: "<<_command_name<<" "<<_command_type<<'\n'
               <<_command_description<<'\n'
-              <<"\n";
+              <<'\n';
+
+            struct param_info {
+                std::string options, desc;
+
+                param_info(std::string opt, std::string d) : options(std::move(opt)), desc(std::move(d)) {}
+            };
+
+            std::vector<param_info> options;
             for(const auto& def : _defined) {
+                std::stringstream _ss;
                 const auto& params=std::get<1>(def);
                 for(const auto& param : params) {
-                    ss<<" "<<param;
+                    _ss<<" "<<param;
                 }
-                if(std::get<0>(def)==PARAM_TYPE_ARGS) {
-                    ss<<" = <value> ";
+                if(std::get<0>(def)==_args()) {
+                    _ss<<" = <value> ";
                 }
-                ss<<": "<<std::get<2>(def)<<std::endl;
+                options.emplace_back(_ss.str(), std::get<2>(def));
             }
-            ss<<"";
+
+            std::size_t padding_size=0;
+            for(const auto& opt : options) {
+                if(padding_size<opt.options.size()) {
+                    padding_size=opt.options.size();
+                }
+            }
+
+            for(const auto& opt : options) {
+                char buf[256]={};
+                sprintf(buf, (" %s%"+std::to_string(padding_size-opt.options.size()+1)+"s %s").c_str(), opt.options.c_str(), " ", opt.desc.c_str());
+                ss<<buf<<'\n';
+            }
+
             return ss.str();
         }
 
@@ -97,9 +124,12 @@ namespace coreutils {
          * @return formed version string
          */
         std::string formed_version() const {
+            struct tm tt;
+            strptime(__DATE__, "%b%n%d%n%Y", &tt);
+
             std::stringstream ss;
             ss<<"Pot coreutils: "<<_command_name<<" "<<version()<<'\n'
-              <<"(C) 2017-2018 Pot Project.\n"
+              <<"(C) 2017-"<<tt.tm_year+1900<<" Pot Project.\n"
               <<"License: Apache License 2.0 (https://opensource.org/licenses/Apache-2.0)\n";
             return ss.str();
         }
@@ -145,10 +175,10 @@ namespace coreutils {
         }
 
         bool has_help()const {
-            return check("-h");
+            return check("--help");
         }
         bool has_version()const {
-            return check("-v");
+            return check("--version");
         }
 
         std::string get(const std::string& flag)const {
@@ -198,12 +228,12 @@ namespace coreutils {
         }
 
         parameter& add_flag(const std::vector<std::string>& flags, const std::string& description) {
-            _defined_parameter_type content{parameter::PARAM_TYPE_FLAG, flags, description};
+            _defined_parameter_type content{_flag(), flags, description};
             _defined.emplace_back(content);
             return *this;
         }
         parameter& add_argument(const std::vector<std::string>& args, const std::string& description) {
-            _defined_parameter_type content{parameter::PARAM_TYPE_ARGS, args, description};
+            _defined_parameter_type content{_args(), args, description};
             _defined.emplace_back(content);
             return *this;
         }
