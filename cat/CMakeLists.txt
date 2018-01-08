@@ -15,5 +15,5 @@
 cmake_minimum_required(VERSION 3.8)
 project(coreutils-cat)
 
-set(SOURCE_FILES main.cpp ../include/coreutils/param.hpp read.cpp read.hpp process.cpp process.hpp)
+set(SOURCE_FILES main.cpp ../include/coreutils/param.hpp read.cpp read.hpp process.cpp process.hpp ../yes/main.cpp)
 add_executable(cat ${SOURCE_FILES})

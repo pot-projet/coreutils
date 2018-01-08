@@ -12,22 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
 cmake_minimum_required(VERSION 3.8)
-project(coreutils)
+project(coreutils-yes)
 
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF)
-
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
-
-set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-
-include_directories(include)
-
-add_subdirectory(cat)
-add_subdirectory(yes)
-add_subdirectory(libcode)
+set(SOURCE_FILES main.cpp ../include/coreutils/param.hpp)
+add_executable(yes ${SOURCE_FILES})

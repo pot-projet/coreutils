@@ -95,7 +95,7 @@ namespace coreutils {
         void replace_control(std::vector<std::string>& lines) {
 
             const auto replace_characters=[&lines](unsigned char ch) {
-                if(0x1f<ch && ch<0x7f)return;
+                if(0x1f<ch && ch<0x7f || ch=='\t')return;
 
                 std::stringstream ss;
                 ss<<"\\x"<<std::hex<<std::setw(2)<<std::setfill('0')<<static_cast<unsigned int>(ch);

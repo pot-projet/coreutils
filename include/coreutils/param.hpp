@@ -23,6 +23,7 @@
 #include <regex>
 #include <sstream>
 #include <ctime>
+#include <experimental/optional>
 
 namespace coreutils {
     /**
@@ -37,7 +38,14 @@ namespace coreutils {
             return false;
         }
     private:
-        std::vector<std::string> _params, _arguments;
+        struct _ap_info {
+            std::string ident;
+            std::size_t position;
+
+            _ap_info(std::string i, std::size_t p) : ident(std::move(i)), position(p) {}
+        };
+    private:
+        std::vector<_ap_info> _params, _arguments;
 
         using _defined_parameter_type=std::tuple<bool, std::vector<std::string>, std::string>;
         std::vector<_defined_parameter_type> _defined;
@@ -157,10 +165,10 @@ namespace coreutils {
                 })!=std::end(flags);
             });
             if(param_itr==std::end(_defined))return std::end(_params);
-            return std::find_if(std::begin(_params), std::end(_params), [&param_itr, &remove_hyphen](const std::string& param) {
+            return std::find_if(std::begin(_params), std::end(_params), [&param_itr, &remove_hyphen](const _ap_info& param) {
                 const auto& p=std::get<1>(*param_itr);
                 return std::find_if(std::begin(p), std::end(p), [&param, &remove_hyphen](const std::string& pp){
-                    return remove_hyphen(pp)==param;
+                    return remove_hyphen(pp)==param.ident;
                 })!=std::end(p);
             });
         }
@@ -181,12 +189,34 @@ namespace coreutils {
             return check("--version");
         }
 
-        std::string get(const std::string& flag)const {
+        std::vector<std::string> get(const std::string& flag)const {
             auto arg_itr= _get_and_check_impl(flag);
+
+            if(arg_itr==std::end(_params))return {};
+            auto begin_pos=arg_itr->position;
+            ++arg_itr;
+
+            std::size_t end_pos=0xffffffff;
+            if(arg_itr==std::end(_params)) {
+                end_pos=arg_itr->position;
+            }
+
+            std::vector<std::string> args;
+            for(const auto& a : _arguments) {
+                if(begin_pos<=a.position && a.position<end_pos) {
+                    args.emplace_back(a.ident);
+                }
+            }
+
+            return args;
         }
 
-        const std::vector<std::string>& arguments()const noexcept {
-            return _arguments;
+        std::vector<std::string> arguments()const noexcept {
+            std::vector<std::string> args;
+            for(const auto& a : _arguments) {
+                args.emplace_back(a.ident);
+            }
+            return std::move(args);
         }
 
         const std::string& execution_command() const noexcept {
@@ -206,14 +236,14 @@ namespace coreutils {
                 arg=argv[i];
                 if(!two_hyphen && std::regex_match(arg, ch_param)) {
                     for(auto itr=std::begin(arg)+1; itr!=std::end(arg); ++itr) {
-                        _params.emplace_back(1, *itr);
+                        _params.emplace_back(std::string(1, *itr), i);
                     }
 
                 }else if(!two_hyphen && std::regex_match(arg, str_param)) {
                     auto equal_symbol = arg.find('=');
-                    _params.emplace_back(arg.substr(2, equal_symbol));
+                    _params.emplace_back(arg.substr(2, equal_symbol), i);
                     if (equal_symbol != std::string::npos) {
-                        _params.emplace_back(arg.substr(equal_symbol));
+                        _arguments.emplace_back(arg.substr(equal_symbol), i);
                     }
 
                 }else{
@@ -221,7 +251,7 @@ namespace coreutils {
                         two_hyphen=true;
 
                     }else{
-                        _arguments.emplace_back(arg);
+                        _arguments.emplace_back(arg, i);
                     }
                 }
             }
