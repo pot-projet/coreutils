@@ -19,6 +19,8 @@
 #include <algorithm>
 #include <regex>
 #include <iomanip>
+#include <cmath>
+#include <sstream>
 
 namespace coreutils {
     namespace cat {
@@ -76,9 +78,7 @@ namespace coreutils {
             for(auto& line : lines) {
                 line+="$";
             }
-            if(!lines.back().empty()) {
-                lines.back().pop_back();
-            }
+            lines.back().pop_back();
         }
 
         void replace_char(std::vector<std::string>& lines, const std::regex& from, const std::string& to) {
@@ -93,9 +93,8 @@ namespace coreutils {
         }
 
         void replace_control(std::vector<std::string>& lines) {
-
             const auto replace_characters=[&lines](unsigned char ch) {
-                if(0x1f<ch && ch<0x7f || ch=='\t')return;
+                if((0x1f<ch && ch<0x7f) || ch=='\t')return;
 
                 std::stringstream ss;
                 ss<<"\\x"<<std::hex<<std::setw(2)<<std::setfill('0')<<static_cast<unsigned int>(ch);
@@ -111,7 +110,7 @@ namespace coreutils {
                     const char to[]="^?";
                     replace_char(lines, std::regex(ss.str()), to);
 
-                }else if(ch<=(0x1f+0x80)) {
+                }else if(ch<=(0x1f+ASCII_OVER)) {
                     const char CH=ch+'@'-ASCII_OVER;
                     const char to[]={'M', '-', '^', CH, '\0'};
                     replace_char(lines, std::regex(ss.str()), to);
@@ -128,10 +127,8 @@ namespace coreutils {
                 }
             };
 
-            for(auto& line : lines) {
-                for(int c=0; c<=0xff; ++c) {
-                    replace_characters(static_cast<unsigned char>(c));
-                }
+            for(int c=0; c<=0xff; ++c) {
+                replace_characters(static_cast<unsigned char>(c));
             }
         }
     } /* cat */

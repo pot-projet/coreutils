@@ -26,7 +26,7 @@ int main() {
 
     namespace cvt=coreutils::codecvt;
 
-    /* check utf8 -> utf16, utf32 */{
+    /* has utf8 -> utf16, utf32 */{
         std::u16string u16;
         cvt::utf16_from_utf8(u16, str8);
         std::cout<<"UTF-8 -> UTF-16: "<<(u16==str16)<<std::endl;
@@ -36,7 +36,7 @@ int main() {
         std::cout<<"UTF-8 -> UTF-32: "<<(u32==str32)<<std::endl;
     }
 
-    /* check utf16 -> utf8, utf32 */ {
+    /* has utf16 -> utf8, utf32 */ {
         std::string u8;
         cvt::utf8_from_utf16(u8, str16);
         std::cout<<"UTF-16 -> UTF-8: "<<(u8==str8)<<std::endl;
@@ -46,7 +46,7 @@ int main() {
         std::cout<<"UTF-16 -> UTF-32: "<<(u32==str32)<<std::endl;
     }
 
-    /* check utf32 -> utf8, utf16 */ {
+    /* has utf32 -> utf8, utf16 */ {
         std::string u8;
         cvt::utf8_from_utf32(u8, str32);
         std::cout<<"UTF-32 -> UTF-8: "<<(u8==str8)<<std::endl;

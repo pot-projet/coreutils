@@ -23,7 +23,7 @@
 #include <regex>
 #include <sstream>
 #include <ctime>
-#include <experimental/optional>
+#include <tuple>
 
 namespace coreutils {
     /**
@@ -58,7 +58,8 @@ namespace coreutils {
          * @param version Command version
          * @param command_description Command description
          */
-        explicit parameter(std::string command_name, std::string command_type, std::string version, std::string command_description)
+        explicit parameter(std::string command_name, std::string command_type,
+                           std::string version, std::string command_description)
                 : _version(std::move(version)),
                   _command_description(std::move(command_description)),
                   _command_name(std::move(command_name)),
@@ -93,6 +94,7 @@ namespace coreutils {
             std::vector<param_info> options;
             for(const auto& def : _defined) {
                 std::stringstream _ss;
+
                 const auto& params=std::get<1>(def);
                 for(const auto& param : params) {
                     _ss<<" "<<param;
@@ -112,7 +114,10 @@ namespace coreutils {
 
             for(const auto& opt : options) {
                 char buf[256]={};
-                sprintf(buf, (" %s%"+std::to_string(padding_size-opt.options.size()+1)+"s %s").c_str(), opt.options.c_str(), " ", opt.desc.c_str());
+                sprintf(
+                        buf,
+                        (" %s%"+std::to_string(padding_size-opt.options.size()+1)+"s %s").c_str(),
+                        opt.options.c_str(), " ", opt.desc.c_str());
                 ss<<buf<<'\n';
             }
 
@@ -158,19 +163,35 @@ namespace coreutils {
             };
             std::string fp=remove_hyphen(fp_);
 
-            auto param_itr=std::find_if(std::begin(_defined), std::end(_defined), [&fp, &remove_hyphen](const _defined_parameter_type& def) {
-                const auto& flags=std::get<1>(def);
-                return std::find_if(std::begin(flags), std::end(flags), [&fp, &remove_hyphen](const std::string& flag){
-                    return remove_hyphen(flag)==fp;
-                })!=std::end(flags);
-            });
+            auto param_itr=std::find_if(
+                    std::begin(_defined),
+                    std::end(_defined),
+                    [&fp, &remove_hyphen](const _defined_parameter_type& def) {
+                        const auto& flags=std::get<1>(def);
+                        return std::find_if(
+                                std::begin(flags),
+                                std::end(flags),
+                                [&fp, &remove_hyphen](const std::string& flag){
+                                    return remove_hyphen(flag)==fp;
+                                }
+                        )!=std::end(flags);
+                    }
+            );
             if(param_itr==std::end(_defined))return std::end(_params);
-            return std::find_if(std::begin(_params), std::end(_params), [&param_itr, &remove_hyphen](const _ap_info& param) {
-                const auto& p=std::get<1>(*param_itr);
-                return std::find_if(std::begin(p), std::end(p), [&param, &remove_hyphen](const std::string& pp){
-                    return remove_hyphen(pp)==param.ident;
-                })!=std::end(p);
-            });
+            return std::find_if(
+                    std::begin(_params),
+                    std::end(_params),
+                    [&param_itr, &remove_hyphen](const _ap_info& param) {
+                        const auto& p=std::get<1>(*param_itr);
+                        return std::find_if(
+                                std::begin(p),
+                                std::end(p),
+                                [&param, &remove_hyphen](const std::string& pp){
+                                    return remove_hyphen(pp)==param.ident;
+                                }
+                        )!=std::end(p);
+                    }
+            );
         }
     public:
         /**
@@ -178,15 +199,15 @@ namespace coreutils {
          * @param flag search string
          * @return has flag
          */
-        bool check(const std::string& flag)const {
+        bool has(const std::string &flag)const {
             return _get_and_check_impl(flag)!=std::end(_params);
         }
 
         bool has_help()const {
-            return check("--help");
+            return has("--help");
         }
         bool has_version()const {
-            return check("--version");
+            return has("--version");
         }
 
         std::vector<std::string> get(const std::string& flag)const {

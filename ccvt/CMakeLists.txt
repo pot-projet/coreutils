@@ -13,7 +13,8 @@
 # limitations under the License.
 
 cmake_minimum_required(VERSION 3.8)
-project(coreutils-cat)
+project(coreutils-ccvt)
 
-set(SOURCE_FILES main.cpp ../include/coreutils/param.hpp read.cpp read.hpp process.cpp process.hpp)
-add_executable(cat ${SOURCE_FILES})
+set(SOURCE_FILES main.cpp ../include/coreutils/code/convert.hpp)
+add_executable(ccvt ${SOURCE_FILES})
+target_link_libraries(ccvt code)

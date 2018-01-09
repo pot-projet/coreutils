@@ -27,10 +27,10 @@ namespace {
                 show_tabs=false, show_nonprinting=false, new_line=false;
     };
     void decode_params(const coreutils::parameter& param, param_info& pi) {
-        if(param.check("-b")) {
+        if(param.has("-b")) {
             pi.number_noblank=true;
         }
-        if(param.check("-n")) {
+        if(param.has("-n")) {
             if(pi.number_noblank) {
                 std::clog<<"-b and -n are specified at the same time.\n"
                          <<"  -b takes precedence."
@@ -38,34 +38,34 @@ namespace {
             }
             pi.number=true;
         }
-        if(param.check("-s")) {
+        if(param.has("-s")) {
             pi.squeeze_blank=true;
         }
-        if(param.check("-N")) {
+        if(param.has("-N")) {
             pi.new_line=true;
         }
 
-        if(param.check("-A")) {
+        if(param.has("-A")) {
             pi.show_ends=true;
             pi.show_tabs=true;
             pi.show_nonprinting=true;
         }else{
-            if(param.check("-e")) {
+            if(param.has("-e")) {
                 pi.show_ends=true;
                 pi.show_nonprinting=true;
             }
-            if(param.check("-t")) {
+            if(param.has("-t")) {
                 pi.show_tabs=true;
                 pi.show_nonprinting=true;
             }
 
-            if(param.check("-E")) {
+            if(param.has("-E")) {
                 pi.show_ends=true;
             }
-            if(param.check("-T")) {
+            if(param.has("-T")) {
                 pi.show_tabs=true;
             }
-            if(param.check("-v")) {
+            if(param.has("-v")) {
                 pi.show_nonprinting=true;
             }
         }
@@ -84,7 +84,7 @@ int main(int argc, char **argv) {
     param.add_flag({"-T", "--show-tabs"},        "Display TAB(\\t) as '^I'");
     param.add_flag({"-u"},                       "");
     param.add_flag({"-v", "--show-nonprinting"}, "Display not printable");
-    param.add_flag({"-N", "--new-line"},         "Display new line in end of file");
+    param.add_flag({"-N", "--new-line"},         "New line in end of file");
 
     param.parse(argc, argv);
 

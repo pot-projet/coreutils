@@ -28,6 +28,8 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 include_directories(include)
 
+add_subdirectory(libcode)
+
 add_subdirectory(cat)
 add_subdirectory(yes)
-add_subdirectory(libcode)
+add_subdirectory(ccvt)

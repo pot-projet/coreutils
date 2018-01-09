@@ -15,6 +15,7 @@
 */
 
 #include <array>
+#include <string>
 
 namespace {
     inline bool utf32_to_utf8_impl(const char32_t u32, std::array<char, 4>& u8) {
